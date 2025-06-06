@@ -71,19 +71,29 @@ with col1:
 
 with col2:
     st.header("AI Tutor")
-    # Display chat history
-    for msg in st.session_state.messages:
-        if msg.get("author") == "user":
-            st.markdown(f"**You:** {msg['content']}")
-        elif msg.get("author") == "assistant" or msg.get("author") == "system":
-            prefix = "Tutor" if msg.get("author") != "system" else "Tutor"
-            st.markdown(f"**{prefix}:** {msg['content']}")
+    
+    # Placeholder for chat history
+    chat_container = st.empty()
+    
+    # Function to display chat history
+    def display_chat():
+        with chat_container.container():
+            for msg in st.session_state.messages:
+                if msg.get("author") == "user":
+                    st.markdown(f"**You:** {msg['content']}")
+                elif msg.get("author") in ["assistant", "system"]:
+                    prefix = "Tutor" if msg.get("author") != "system" else "Tutor"
+                    st.markdown(f"**{prefix}:** {msg['content']}")
+
+    # Display initial chat history
+    display_chat()
 
     # User input for AI tutor
     user_input = st.text_input("Ask the Tutor about the question or your code:")
     if st.button("Send", key="send_ai") and user_input:
         # Append user message
         st.session_state.messages.append({"author": "user", "content": user_input})
+        
         # Call Google Generative AI API
         try:
             model = genai.GenerativeModel('models/chat-bison-001')
@@ -94,8 +104,8 @@ with col2:
             response = model.generate_content(formatted_messages)
             assistant_message = response.text
             st.session_state.messages.append({"author": "assistant", "content": assistant_message})
+            
+            # Update chat display
+            display_chat()
         except Exception as e:
             st.error(f"Error with AI Tutor API: {e}")
-
-        # Rerun to display updated chat
-        st.experimental_rerun()
