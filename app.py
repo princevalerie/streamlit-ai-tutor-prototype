@@ -96,7 +96,7 @@ with col2:
         
         # Call Google Generative AI API
         try:
-            model = genai.GenerativeModel('models/chat-bison-001')
+            model = genai.GenerativeModel('models/gemini-flash-2.0')
             formatted_messages = [
                 {"role": m["author"], "parts": [{"text": m["content"]}]}
                 for m in st.session_state.messages
