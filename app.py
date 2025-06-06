@@ -4,6 +4,9 @@ import tempfile
 import os
 import openai
 
+# Page configuration must be first Streamlit command
+st.set_page_config(page_title="AI Tutor Academy", layout="wide")
+
 # Set your OpenAI API key from sidebar input
 api_key_input = st.sidebar.text_input("Masukkan OpenAI API Key Anda:", type="password")
 if api_key_input:
@@ -11,8 +14,6 @@ if api_key_input:
 else:
     st.sidebar.warning("Silakan masukkan API Key Anda untuk menggunakan AI Tutor.")
     st.stop()
-
-st.set_page_config(page_title="AI Tutor Academy", layout="wide")
 
 # Initialize session state for AI chat history
 if "messages" not in st.session_state:
