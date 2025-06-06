@@ -94,9 +94,9 @@ with col2:
         # Append user message
         st.session_state.messages.append({"author": "user", "content": user_input})
         
-        # Call Google Generative AI API
+        # Call Google Generative AI API (adapted from provided script)
         try:
-            model = genai.GenerativeModel('models/gemini-flash-2.0')
+            model = genai.GenerativeModel("gemini-1.5-flash")  # Updated model name
             formatted_messages = [
                 {"role": m["author"], "parts": [{"text": m["content"]}]}
                 for m in st.session_state.messages
