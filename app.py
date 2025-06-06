@@ -84,14 +84,15 @@ with col2:
     if st.button("Send", key="send_ai") and user_input:
         # Append user message
         st.session_state.messages.append({"author": "user", "content": user_input})
-        # Call Gemini Chat API via Google Generative AI
+        # Call Google Generative AI API
         try:
-            response = genai.chat.completions.create(
-                model="chat-bison-001",  # or available Gemini model
-                messages=[{"author": m["author"], "content": m["content"]} for m in st.session_state.messages]
-            )
-            assistant_message = response.choices[0].message.content
-            # Append assistant message
+            model = genai.GenerativeModel('models/chat-bison-001')
+            formatted_messages = [
+                {"role": m["author"], "parts": [{"text": m["content"]}]}
+                for m in st.session_state.messages
+            ]
+            response = model.generate_content(formatted_messages)
+            assistant_message = response.text
             st.session_state.messages.append({"author": "assistant", "content": assistant_message})
         except Exception as e:
             st.error(f"Error with AI Tutor API: {e}")
