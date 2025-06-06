@@ -73,12 +73,11 @@ with col2:
     st.header("AI Tutor")
     # Display chat history
     for msg in st.session_state.messages:
-        role = "You" if msg.get("author") == "user" else "Tutor"
-        content = msg.get("content")
         if msg.get("author") == "user":
-            st.markdown(f"**You:** {content}")
-        else:
-            st.markdown(f"**Tutor:** {content}")
+            st.markdown(f"**You:** {msg['content']}")
+        elif msg.get("author") == "assistant" or msg.get("author") == "system":
+            prefix = "Tutor" if msg.get("author") != "system" else "Tutor"
+            st.markdown(f"**{prefix}:** {msg['content']}")
 
     # User input for AI tutor
     user_input = st.text_input("Ask the Tutor about the question or your code:")
@@ -87,7 +86,7 @@ with col2:
         st.session_state.messages.append({"author": "user", "content": user_input})
         # Call Gemini Chat API via Google Generative AI
         try:
-            response = genai.chat.create(
+            response = genai.chat.completions.create(
                 model="chat-bison-001",  # or available Gemini model
                 messages=[{"author": m["author"], "content": m["content"]} for m in st.session_state.messages]
             )
