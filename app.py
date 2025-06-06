@@ -2,49 +2,49 @@ import streamlit as st
 import subprocess
 import tempfile
 import os
-import openai
+import google.generativeai as genai
 
 # Page configuration must be first Streamlit command
 st.set_page_config(page_title="AI Tutor Academy", layout="wide")
 
-# Set your OpenAI API key from sidebar input
-api_key_input = st.sidebar.text_input("Masukkan OpenAI API Key Anda:", type="password")
+# Set your Google API key from sidebar input (for Gemini)
+api_key_input = st.sidebar.text_input("Enter your Google API Key for Gemini:", type="password")
 if api_key_input:
-    openai.api_key = api_key_input
+    genai.configure(api_key=api_key_input)
 else:
-    st.sidebar.warning("Silakan masukkan API Key Anda untuk menggunakan AI Tutor.")
+    st.sidebar.warning("Please enter your API Key to use AI Tutor.")
     st.stop()
 
 # Initialize session state for AI chat history
 if "messages" not in st.session_state:
     st.session_state.messages = [
-        {"role": "system", "content": "You are an AI tutor that helps students learn Python. Provide clear, concise, and helpful explanations."}
+        {"author": "system", "content": "You are an AI tutor that helps students learn Python. Provide clear, concise, and helpful explanations."}
     ]
 
-# Sample question for demonstration
+# Sample question in English
 sample_question = """
-Tulis sebuah fungsi Python yang menerima sebuah list integer dan mengembalikan jumlah elemen positif di dalamnya. Contoh: input [1, -2, 3, 4, -5] mengembalikan 3.
+Write a Python function that takes a list of integers and returns the count of positive elements. Example: input [1, -2, 3, 4, -5] returns 3.
 """
 
 # Layout with two columns: left for question & terminal, right for AI tutor
 col1, col2 = st.columns([2, 1])
 
 with col1:
-    st.header("Soal dan Terminal Python")
-    st.subheader("Soal:")
+    st.header("Python Question and Terminal")
+    st.subheader("Question:")
     st.code(sample_question, language="python")
 
     # Code editor
-    code = st.text_area("Tulis kode Python di sini:", height=200, value="""def count_positive(numbers):
-    # Mulai tulis kode di sini
+    code = st.text_area("Write your Python code here:", height=200, value="""def count_positive(numbers):
+    # Start writing your code here
     pass
 
-# Contoh penggunaan:
+# Example usage:
 # print(count_positive([1, -2, 3, 4, -5]))  # Output: 3
 """)
 
     # Run button
-    if st.button("Jalankan Kode"):
+    if st.button("Run Code"):
         # Save code to a temporary file and run it
         with tempfile.NamedTemporaryFile(delete=False, suffix=".py") as tmp_file:
             tmp_file.write(code.encode('utf-8'))
@@ -64,7 +64,7 @@ with col1:
                 st.subheader("Error:")
                 st.code(result.stderr)
         except subprocess.TimeoutExpired:
-            st.error("Eksekusi kode melebihi batas waktu.")
+            st.error("Code execution exceeded the time limit.")
         finally:
             # Cleanup temporary file
             os.remove(tmp_file_path)
@@ -73,27 +73,29 @@ with col2:
     st.header("AI Tutor")
     # Display chat history
     for msg in st.session_state.messages:
-        if msg["role"] == "user":
-            st.markdown(f"**Anda:** {msg['content']}")
-        elif msg["role"] == "assistant":
-            st.markdown(f"**Tutor:** {msg['content']}")
+        role = "You" if msg.get("author") == "user" else "Tutor"
+        content = msg.get("content")
+        if msg.get("author") == "user":
+            st.markdown(f"**You:** {content}")
+        else:
+            st.markdown(f"**Tutor:** {content}")
 
     # User input for AI tutor
-    user_input = st.text_input("Tanya Tutor tentang soal atau kode Anda:")
-    if st.button("Kirim", key="send_ai") and user_input:
+    user_input = st.text_input("Ask the Tutor about the question or your code:")
+    if st.button("Send", key="send_ai") and user_input:
         # Append user message
-        st.session_state.messages.append({"role": "user", "content": user_input})
-        # Call OpenAI Chat API
+        st.session_state.messages.append({"author": "user", "content": user_input})
+        # Call Gemini Chat API via Google Generative AI
         try:
-            response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
-                messages=st.session_state.messages
+            response = genai.chat.create(
+                model="chat-bison-001",  # or available Gemini model
+                messages=[{"author": m["author"], "content": m["content"]} for m in st.session_state.messages]
             )
-            assistant_message = response.choices[0].message["content"]
+            assistant_message = response.choices[0].message.content
             # Append assistant message
-            st.session_state.messages.append({"role": "assistant", "content": assistant_message})
+            st.session_state.messages.append({"author": "assistant", "content": assistant_message})
         except Exception as e:
-            st.error(f"Terjadi kesalahan dengan API AI: {e}")
+            st.error(f"Error with AI Tutor API: {e}")
 
         # Rerun to display updated chat
         st.experimental_rerun()
